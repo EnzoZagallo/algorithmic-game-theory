@@ -25,7 +25,9 @@ Using **Zermelo's Theorem** (finite deterministic games without draws have a gua
 - **$\mathcal{N}$-Position (Next-Player Winning):** Whoever moves from here can force a win by making at least one move into a $\mathcal{P}$-position.
 - **$\mathcal{P}$-Position (Previous-Player Winning / Trap):** Whoever has to move from here loses against optimal play, because *every* legal move hands an $\mathcal{N}$-position to the opponent.
 
-$$\text{is\_winning}(s) \iff \exists\, s' \in \text{moves}(s) \text{ such that } \neg\,\text{is\_winning}(s')$$
+$$
+\text{winning}(s) \iff \exists\, s' \in \text{moves}(s) \text{ such that } \neg\,\text{winning}(s')
+$$
 
 ### State Representation & Caching
 Raw game trees blow up fast because different move orders often reach the exact same board. By turning every state into a clean **identifier representation** (like sorted tuples `tuple[int, ...]` for Nim piles or `tuple[tuple[int, ...], ...]` for 2D grids) and decorating the evaluator with `@lru_cache(maxsize=None)`, equivalent subtrees merge into a single node with $\mathcal{O}(1)$ lookups.
