@@ -32,6 +32,12 @@ $$
 ### State Representation & Caching
 Raw game trees blow up fast because different move orders often reach the exact same board. By turning every state into a clean **identifier representation** (like sorted tuples `tuple[int, ...]` for Nim piles or `tuple[tuple[int, ...], ...]` for 2D grids) and decorating the evaluator with `@lru_cache(maxsize=None)`, equivalent subtrees merge into a single node with $\mathcal{O}(1)$ lookups.
 
+### Strategic-Form (Normal-Form) Games
+In simultaneous-move games (Problem Set 2), players choose strategies at the same time and payoffs are mapped in dictionaries from action-profile tuples $(s_1, \dots, s_n)$ to payoff tuples $(u_1, \dots, u_n)$:
+- **Beliefs & Best Responses ($BR_i(\theta_{-i})$):** Weighting payoffs across an opponent's probability distribution $\theta_{-i}$ to find the set of actions that maximize expected utility.
+- **Iterated Elimination of Dominated Strategies (IEDS / IEWDS):** Dynamically narrowing active strategy lists by removing actions that are strictly ($>$) or weakly ($\ge$ everywhere, $>$ somewhere) beaten by another pure or mixed strategy across all surviving opponent actions.
+- **Pure Nash Equilibrium (PNE):** Action profiles where every player is simultaneously playing a best response to the others (no player can strictly gain by deviating alone).
+
 ---
 
 ## 3. Repository Structure
@@ -41,14 +47,22 @@ algorithmic-game-theory/
 ├── README.md                           # Main project overview and concept notes
 ├── requirements.txt                    # Python dependencies (pytest)
 ├── docs/
-│   ├── Problem_Set_1_WS2627.pdf        # Original problem sets
+│   ├── Problem_Set_1_WS2627.pdf        # Problem Set 1 sheet
+│   ├── Problem_Set_2_WS2627.pdf        # Problem Set 2 sheet
 │   └── lectures/                       # Lecture notes and supplementary materials
 ├── core_solvers/                       
-│   └── backward_induction.py           # Reusable backward-induction helper
-└── problem_set_01/
-    ├── README.md                       # Thought process, catches & proofs for PS1
-    ├── misere_nim_solver.py            # Solver for Problem 1 (4-pile Nim)
-    └── chomp_solver.py                 # Solver for Problem 2 (Chomp 2D grid)
+│   ├── backward_induction.py           # Reusable backward-induction helper (impartial games)
+│   └── normal_form.py                  # Reusable strategic-form game helpers (IEDS, BR, Nash)
+├── problem_set_01/
+│   ├── README.md                       # Thought process, catches & proofs for PS1
+│   ├── misere_nim_solver.py            # Solver for Problem 1 (4-pile Nim)
+│   └── chomp_solver.py                 # Solver for Problem 2 (Chomp 2D grid)
+└── problem_set_02/
+    ├── README.md                       # Thought process, catches & solutions for PS2
+    ├── p1_cournot_duopoly.py           # Problem 1: Quantity duopoly & IEDS
+    ├── p2_beliefs_best_responses.py    # Problem 2: Expected payoffs & best responses
+    ├── p3_dominance_nash.py            # Problem 3: IEDS, IEWDS (mixed) & Pure Nash
+    └── p4_student_initiative.py        # Problem 4: 3-player game IEDS & Pure Nash
 ```
 
 ---
@@ -58,9 +72,13 @@ algorithmic-game-theory/
 ```bash
 pip install -r requirements.txt
 
-# Problem 1: Four Piles of Matches
+# Problem Set 01: Impartial Games (Nim & Chomp)
 python -m problem_set_01.misere_nim_solver
-
-# Problem 2: Game of Chomp (2x4 Grid)
 python -m problem_set_01.chomp_solver
+
+# Problem Set 02: Strategic-Form Games, IEDS/IEWDS & Nash Equilibria
+python -m problem_set_02.p1_cournot_duopoly
+python -m problem_set_02.p2_beliefs_best_responses
+python -m problem_set_02.p3_dominance_nash
+python -m problem_set_02.p4_student_initiative
 ```
