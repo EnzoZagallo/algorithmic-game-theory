@@ -26,7 +26,7 @@ Using **Zermelo's Theorem** (finite deterministic games without draws have a gua
 - **$\mathcal{P}$-Position (Previous-Player Winning / Trap):** Whoever has to move from here loses against optimal play, because *every* legal move hands an $\mathcal{N}$-position to the opponent.
 
 $$
-\text{winning}(s) \iff \exists\, s' \in \text{moves}(s) \text{ such that } \neg\,\text{winning}(s')
+\text{winning}(s) \iff \exists s' \in \text{moves}(s) \text{ such that } \neg\text{winning}(s')
 $$
 
 ### State Representation & Caching

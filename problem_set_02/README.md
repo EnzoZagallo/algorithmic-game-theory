@@ -17,10 +17,10 @@ Problem Set 2 moves away from sequential impartial games (like Nim and Chomp in 
 In this problem, two smart-glasses firms choose their production quantities **simultaneously** from three discrete options—Small, Medium, or Large:
 
 $$
-q_i \in \{1, 3, 5\}, \quad p = 10 - q_1 - q_2, \quad \pi_i = (p - c_i)q_i \quad \text{with } c_1 = 2,\; c_2 = 3
+q_i \in \lbrace 1, 3, 5 \rbrace, \quad p = 10 - q_1 - q_2, \quad \pi_i = (p - c_i)q_i \quad \text{with } c_1 = 2, \quad c_2 = 3
 $$
 
-My first economics instinct when seeing a Cournot profit function like $\pi_i = (10 - q_1 - q_2 - c_i)q_i$ was to take derivatives ($\frac{\partial \pi_i}{\partial q_i} = 0$) to solve for continuous reaction functions. **Catch #1:** Calculus only works when firms can pick *any* continuous real quantity $q_i \ge 0$. Because both firms are restricted to just three discrete jumps $\{1, 3, 5\}$, a continuous optimum might not even be a legal action! Instead, I had to evaluate all $3 \times 3 = 9$ discrete combinations directly and eliminate strictly dominated strategies round by round.
+My first economics instinct when seeing a Cournot profit function like $\pi_i = (10 - q_1 - q_2 - c_i)q_i$ was to take derivatives ($\frac{\partial \pi_i}{\partial q_i} = 0$) to solve for continuous reaction functions. **Catch #1:** Calculus only works when firms can pick *any* continuous real quantity $q_i \ge 0$. Because both firms are restricted to just three discrete jumps `{1, 3, 5}`, a continuous optimum might not even be a legal action! Instead, I had to evaluate all $3 \times 3 = 9$ discrete combinations directly and eliminate strictly dominated strategies round by round.
 
 ---
 
@@ -35,7 +35,7 @@ To translate my paper solution into clean Python without hardcoding numbers, I s
 #### B. Dynamic Conditional Loop for IEDS (`run_ieds`)
 - **Catch #2 — Never delete rows/columns from a matrix in-place:** If you store a payoff table as a 2D list and start popping rows or columns mid-loop, every remaining index shifts and breaks the comparisons.
 - **How `run_ieds` avoids this:** I leave `matrix` completely untouched and maintain two active lists of surviving strategies: `active_q1 = [1, 3, 5]` and `active_q2 = [1, 3, 5]`.
-- Inside a `while True:` loop, I use Python's `all(...)` to check whether another surviving strategy `alt_s` gives a **strictly higher (`>`)** profit than `s` against *every* currently surviving strategy of the other firm ($R^1 \subset S,\; R^2 \subset R^1,\; \dots$). Whenever a dominated action is removed, `changed = True` triggers another pass for the other firm; once a full round finishes with zero removals, the loop stops ($R^k = R^{k-1}$).
+- Inside a `while True:` loop, I use Python's `all(...)` to check whether another surviving strategy `alt_s` gives a **strictly higher (`>`)** profit than `s` against *every* currently surviving strategy of the other firm ($R^1 \subset S, \quad R^2 \subset R^1, \quad \dots$). Whenever a dominated action is removed, `changed = True` triggers another pass for the other firm; once a full round finishes with zero removals, the loop stops ($R^k = R^{k-1}$).
 
 #### C. Nodes & Information Sets for the Extensive Form (`class Node` & `build_extensive_form`)
 - **Catch #3 — Drawing a simultaneous game as a tree:** Extensive-form trees branch one player after another, even when players move at the same time. If I just built a normal tree with Firm 1 at the root and Firm 2 below it, it would look like Firm 2 gets to *see* Firm 1's quantity before choosing!
@@ -77,9 +77,9 @@ flowchart TD
 
 | Firm 1 \ Firm 2 | $q_2 = 1$ | $q_2 = 3$ | $q_2 = 5$ |
 | :--- | :---: | :---: | :---: |
-| **$q_1 = 1$** | $(6, 5)$ | $(4, 9)$ | $(2, 5)$ |
-| **$q_1 = 3$** | $(12, 3)$ | $(6, 3)$ | $(0, -5)$ |
-| **$q_1 = 5$** | $(10, 1)$ | $(0, -3)$ | $(-10, -15)$ |
+| **$q_1 = 1$** | `(6, 5)` | `(4, 9)` | `(2, 5)` |
+| **$q_1 = 3$** | `(12, 3)` | `(6, 3)` | `(0, -5)` |
+| **$q_1 = 5$** | `(10, 1)` | `(0, -3)` | `(-10, -15)` |
 
 ---
 
@@ -87,28 +87,29 @@ flowchart TD
 
 Running `python -m problem_set_02.p1_cournot_duopoly` confirms the exact hand-worked elimination rounds:
 
-1. **Round 1 — Eliminate $q_1 = 5$ and $q_2 = 5$:**
-   - **Firm 1:** Comparing $q_1 = 3$ against $q_1 = 5$ gives $12 > 10$, $6 > 0$, and $0 > -10$. So **$q_1 = 5$ is strictly dominated by $q_1 = 3$**. *(Note: $q_1 = 1$ cannot be eliminated yet because if $q_2 = 5$, $\pi_1(1, 5) = 2 > \pi_1(3, 5) = 0$!)*
-   - **Firm 2:** Comparing $q_2 = 3$ against $q_2 = 5$ gives $9 > 5$, $3 > -5$, and $-3 > -15$. So **$q_2 = 5$ is strictly dominated by $q_2 = 3$**.
-2. **Round 2 — Eliminate $q_1 = 1$:**
-   - Once $q_2 = 5$ is gone, Firm 2 only has $\{1, 3\}$ left. Across those two columns, $q_1 = 3$ beats $q_1 = 1$ everywhere ($12 > 6$ and $6 > 4$). Now **$q_1 = 1$ is strictly dominated by $q_1 = 3$**.
-3. **Round 3 — Convergence & Catch #4 (Why *both* $q_2 = 1$ and $q_2 = 3$ survive!):**
-   - With Firm 1 down to only $q_1 = 3$, let's check Firm 2's remaining choices:
+1. **Round 1 — Eliminate `q1 = 5` and `q2 = 5`:**
+   - **Firm 1:** Comparing `q1 = 3` against `q1 = 5` gives `12 > 10`, `6 > 0`, and `0 > -10`. So **`q1 = 5` is strictly dominated by `q1 = 3`**. (Note: `q1 = 1` cannot be eliminated yet because when `q2 = 5`, $\pi_1(1, 5) = 2 > \pi_1(3, 5) = 0$.)
+   - **Firm 2:** Comparing `q2 = 3` against `q2 = 5` gives `9 > 5`, `3 > -5`, and `-3 > -15`. So **`q2 = 5` is strictly dominated by `q2 = 3`**.
+2. **Round 2 — Eliminate `q1 = 1`:**
+   - Once `q2 = 5` is gone, Firm 2 only has `{1, 3}` left. Across those two columns, `q1 = 3` beats `q1 = 1` everywhere (`12 > 6` and `6 > 4`). Now **`q1 = 1` is strictly dominated by `q1 = 3`**.
+3. **Round 3 — Convergence & Catch #4 (Why both `q2 = 1` and `q2 = 3` survive!):**
+   - With Firm 1 down to only `q1 = 3`, let's check Firm 2's remaining choices:
      - $\pi_2(3, 1) = (10 - 3 - 1 - 3) \cdot 1 = 3$
      - $\pi_2(3, 3) = (10 - 3 - 3 - 3) \cdot 3 = 3$
-   - **Catch #4:** Both $q_2 = 1$ and $q_2 = 3$ give Firm 2 the **exact same profit of $3$**! If we were doing *weak* dominance earlier on $\{1, 3\} \times \{1, 3\}$, $q_2 = 3$ giving $(9, 3)$ vs. $q_2 = 1$ giving $(5, 3)$ would have knocked out $q_2 = 1$. But **IEDS requires strict inequality (`>`)**, so because $3 = 3$, neither $q_2 = 1$ nor $q_2 = 3$ strictly dominates the other (not even via a mix).
+   - **Catch #4:** Both `q2 = 1` and `q2 = 3` give Firm 2 the **exact same profit of `3`**! If we were doing *weak* dominance earlier on `{1, 3} x {1, 3}`, `q2 = 3` giving `(9, 3)` vs. `q2 = 1` giving `(5, 3)` would have knocked out `q2 = 1`. But **IEDS requires strict inequality (`>`)**, so because `3 = 3`, neither `q2 = 1` nor `q2 = 3` strictly dominates the other (not even via a mix).
 
 **Surviving Strategies under IEDS:**
-- **Firm 1:** $q_1 \in \{3\}$
-- **Firm 2:** $q_2 \in \{1, 3\}$  
-*(Surviving strategy profiles: $(3, 1)$ with payoffs $(12, 3)$, and $(3, 3)$ with payoffs $(6, 3)$.)*
+- **Firm 1:** $q_1 \in \lbrace 3 \rbrace$ (i.e., `[3]`)
+- **Firm 2:** $q_2 \in \lbrace 1, 3 \rbrace$ (i.e., `[1, 3]`)
+
+> **Surviving strategy profiles:** `(3, 1)` with payoffs `(12, 3)`, and `(3, 3)` with payoffs `(6, 3)`.
 
 ---
 
 ## Problem 2: Beliefs and Best Responses
 
 ### 1. Initial Intuition & Moving from Pure Actions to Probability Weights
-In Problem 2, we move from pure certainty into **beliefs ($\theta$)** and **mixed strategies ($\sigma$)** on a $3 \times 3$ static game where Player 1 chooses a row $s_1 \in \{U, M, D\}$ and Player 2 chooses a column $s_2 \in \{L, C, R\}$.
+In Problem 2, we move from pure certainty into **beliefs ($\theta$)** and **mixed strategies ($\sigma$)** on a $3 \times 3$ static game where Player 1 chooses a row $s_1 \in \lbrace U, M, D \rbrace$ and Player 2 chooses a column $s_2 \in \lbrace L, C, R \rbrace$.
 
 Because players are no longer picking a single pure move with 100% certainty, my main idea was to treat beliefs and mixed strategies as **probability weights** attached to each cell's payoff:
 - When only the opponent's behavior is uncertain (a belief $\theta_{-i}$), I weight each of my pure actions across the opponent's probability distribution to see which action(s) maximize my expected payoff.
@@ -143,18 +144,18 @@ Just like in Problem 1, I stored the $3 \times 3$ table in a dictionary `MATRIX`
 
 | Player 1 \ Player 2 | $L$ | $C$ | $R$ |
 | :--- | :---: | :---: | :---: |
-| **$U$** | $(3, 2)$ | $(0, 4)$ | $(6, 1)$ |
-| **$M$** | $(2, 5)$ | $(5, 1)$ | $(1, 3)$ |
-| **$D$** | $(4, 0)$ | $(2, 3)$ | $(3, 6)$ |
+| **$U$** | `(3, 2)` | `(0, 4)` | `(6, 1)` |
+| **$M$** | `(2, 5)` | `(5, 1)` | `(1, 3)` |
+| **$D$** | `(4, 0)` | `(2, 3)` | `(3, 6)` |
 
 #### Part (a): Pure Strategy Payoff Lookups
 Reading the first entry for Player 1 ($u_1$) and the second entry for Player 2 ($u_2$):
-- $u_1(U, R) = \mathbf{6}$ *(from cell $(U, R) = (6, 1)$)*
-- $u_2(M, L) = \mathbf{5}$ *(from cell $(M, L) = (2, 5)$)*
-- $u_1(D, C) = \mathbf{2}$ *(from cell $(D, C) = (2, 3)$)*
+- $u_1(U, R) = \mathbf{6}$ — from cell `(U, R) = (6, 1)`
+- $u_2(M, L) = \mathbf{5}$ — from cell `(M, L) = (2, 5)`
+- $u_1(D, C) = \mathbf{2}$ — from cell `(D, C) = (2, 3)`
 
-#### Part (b): Expected Payoffs & $BR_1(\theta_2)$ for $\theta_2 = \left(\frac{1}{2}, \frac{1}{4}, \frac{1}{4}\right)$
-Weighting each row of Player 1's payoffs by $\theta_2(L) = \frac{1}{2}$, $\theta_2(C) = \frac{1}{4}$, and $\theta_2(R) = \frac{1}{4}$:
+#### Part (b): Expected Payoffs & $BR_1(\theta_2)$ for $\theta_2 = (1/2, 1/4, 1/4)$
+Weighting each row of Player 1's payoffs by $\theta_2(L) = 1/2$, $\theta_2(C) = 1/4$, and $\theta_2(R) = 1/4$:
 - $u_1(U, \theta_2) = \frac{1}{2}(3) + \frac{1}{4}(0) + \frac{1}{4}(6) = 1.5 + 0 + 1.5 = \mathbf{3.0}$
 - $u_1(M, \theta_2) = \frac{1}{2}(2) + \frac{1}{4}(5) + \frac{1}{4}(1) = 1.0 + 1.25 + 0.25 = \mathbf{2.5}$
 - $u_1(D, \theta_2) = \frac{1}{2}(4) + \frac{1}{4}(2) + \frac{1}{4}(3) = 2.0 + 0.5 + 0.75 = \mathbf{3.25} = \frac{13}{4}$
@@ -162,11 +163,11 @@ Weighting each row of Player 1's payoffs by $\theta_2(L) = \frac{1}{2}$, $\theta
 Since $3.25 > 3.0 > 2.5$, Player 1's unique best response is:
 
 $$
-BR_1(\theta_2) = \{D\}
+BR_1(\theta_2) = \lbrace D \rbrace
 $$
 
-#### Part (c): Expected Payoffs & $BR_2(\theta_1)$ for $\theta_1 = \left(\frac{1}{2}, 0, \frac{1}{2}\right)$
-Weighting each column of Player 2's payoffs by $\theta_1(U) = \frac{1}{2}$, $\theta_1(M) = 0$, and $\theta_1(D) = \frac{1}{2}$:
+#### Part (c): Expected Payoffs & $BR_2(\theta_1)$ for $\theta_1 = (1/2, 0, 1/2)$
+Weighting each column of Player 2's payoffs by $\theta_1(U) = 1/2$, $\theta_1(M) = 0$, and $\theta_1(D) = 1/2$:
 - $u_2(\theta_1, L) = \frac{1}{2}(2) + 0(5) + \frac{1}{2}(0) = 1.0 + 0 + 0 = \mathbf{1.0}$
 - $u_2(\theta_1, C) = \frac{1}{2}(4) + 0(1) + \frac{1}{2}(3) = 2.0 + 0 + 1.5 = \mathbf{3.5} = \frac{7}{2}$
 - $u_2(\theta_1, R) = \frac{1}{2}(1) + 0(3) + \frac{1}{2}(6) = 0.5 + 0 + 3.0 = \mathbf{3.5} = \frac{7}{2}$
@@ -174,28 +175,28 @@ Weighting each column of Player 2's payoffs by $\theta_1(U) = \frac{1}{2}$, $\th
 Because $C$ and $R$ tie for the highest expected payoff ($3.5$), both are best responses:
 
 $$
-BR_2(\theta_1) = \{C, R\}
+BR_2(\theta_1) = \lbrace C, R \rbrace
 $$
 
-#### Part (d): Mixed Strategy Payoff $u_2(\sigma_1, \sigma_2)$ for $\sigma_1 = \left(\frac{1}{2}, 0, \frac{1}{2}\right)$ and $\sigma_2 = \left(0, \frac{1}{2}, \frac{1}{2}\right)$
-Summing $\sigma_1(s_1) \cdot \sigma_2(s_2) \cdot u_2(s_1, s_2)$ over the four active cells where both probabilities are $\frac{1}{2}$ (each gets joint weight $\frac{1}{2} \cdot \frac{1}{2} = \frac{1}{4}$):
+#### Part (d): Mixed Strategy Payoff $u_2(\sigma_1, \sigma_2)$ for $\sigma_1 = (1/2, 0, 1/2)$ and $\sigma_2 = (0, 1/2, 1/2)$
+Summing $\sigma_1(s_1) \cdot \sigma_2(s_2) \cdot u_2(s_1, s_2)$ over the four active cells where both probabilities are $1/2$ (each gets joint weight $\frac{1}{2} \cdot \frac{1}{2} = \frac{1}{4}$):
 
 $$
-u_2(\sigma_1, \sigma_2) = \frac{1}{4}\underbrace{u_2(U, C)}_{4} + \frac{1}{4}\underbrace{u_2(U, R)}_{1} + \frac{1}{4}\underbrace{u_2(D, C)}_{3} + \frac{1}{4}\underbrace{u_2(D, R)}_{6} = 1.0 + 0.25 + 0.75 + 1.5 = \mathbf{3.5} = \frac{7}{2}
+u_2(\sigma_1, \sigma_2) = \frac{1}{4} u_2(U, C) + \frac{1}{4} u_2(U, R) + \frac{1}{4} u_2(D, C) + \frac{1}{4} u_2(D, R) = \frac{1}{4}(4) + \frac{1}{4}(1) + \frac{1}{4}(3) + \frac{1}{4}(6) = 1.0 + 0.25 + 0.75 + 1.5 = \mathbf{3.5}
 $$
 
-> **Sanity Check / Shortcut from Part (c):** Notice that $\sigma_1 = (\frac{1}{2}, 0, \frac{1}{2})$ is the exact same distribution as $\theta_1$ in Part (c), where both $C$ and $R$ gave Player 2 an expected payoff of $3.5$. Since $\sigma_2 = (0, \frac{1}{2}, \frac{1}{2})$ mixes 50/50 between those two tied best responses, Player 2's expected payoff naturally stays $\frac{1}{2}(3.5) + \frac{1}{2}(3.5) = \mathbf{3.5}$!
+> **Sanity Check / Shortcut from Part (c):** Notice that $\sigma_1 = (1/2, 0, 1/2)$ is the exact same distribution as $\theta_1$ in Part (c), where both `C` and `R` gave Player 2 an expected payoff of `3.5`. Since $\sigma_2 = (0, 1/2, 1/2)$ mixes 50/50 between those two tied best responses, Player 2's expected payoff naturally stays $\frac{1}{2}(3.5) + \frac{1}{2}(3.5) = \mathbf{3.5}$!
 
 ---
 
 ## Problem 3: Dominated Strategies & Nash Equilibria
 
 ### 1. Initial Intuition & Why Mixed Strategies Matter Here
-In Problem 3, we analyze a $4 \times 4$ static game where Player 1 chooses a row $s_1 \in \{A, B, C, D\}$ and Player 2 chooses a column $s_2 \in \{a, b, c, d\}$. Our goal is to compare which strategies survive **IEDS** (strict dominance) vs. **IEWDS** (weak dominance)—remembering to check **domination by mixed strategies** as well—and then compare both against the **Pure Nash Equilibria** of the game.
+In Problem 3, we analyze a $4 \times 4$ static game where Player 1 chooses a row $s_1 \in \lbrace A, B, C, D \rbrace$ and Player 2 chooses a column $s_2 \in \lbrace a, b, c, d \rbrace$. Our goal is to compare which strategies survive **IEDS** (strict dominance) vs. **IEWDS** (weak dominance)—remembering to check **domination by mixed strategies** as well—and then compare both against the **Pure Nash Equilibria** of the game.
 
-When I first checked pure strategies by hand, it was easy to eliminate Column $d$ and Row $C$, but then the game seemed stuck at $\{A, B, D\} \times \{a, b, c\}$:
-- Row $D$ gives Player 1 payoffs $(1, 1, 5)$ across $(a, b, c)$. Neither pure $A$ $(4, 0, 5)$ nor pure $B$ $(0, 4, 5)$ dominates $D$ on its own because each gets $0 < 1$ in one column.
-- However, once I tried a **50/50 mix** of $A$ and $B$ ($\frac{1}{2}A + \frac{1}{2}B$), the expected payoffs became $(2, 2, 5)$! Under *strict* dominance (IEDS), $(2, 2, 5)$ still cannot eliminate $D$'s $(1, 1, 5)$ because of the tie $5 = 5$ in column $c$. Under *weak* dominance (IEWDS), that tie is allowed ($2 > 1$, $2 > 1$, and $5 \ge 5$), knocking out Row $D$—which in turn lets Player 2 use $\frac{1}{2}a + \frac{1}{2}b$ to knock out Column $c$!
+When I first checked pure strategies by hand, it was easy to eliminate Column `d` and Row `C`, but then the game seemed stuck at `{A, B, D} x {a, b, c}`:
+- Row `D` gives Player 1 payoffs `(1, 1, 5)` across `(a, b, c)`. Neither pure `A` `(4, 0, 5)` nor pure `B` `(0, 4, 5)` dominates `D` on its own because each gets `0 < 1` in one column.
+- However, once I tried a **50/50 mix** of `A` and `B` ($\frac{1}{2}A + \frac{1}{2}B$), the expected payoffs became `(2, 2, 5)`! Under *strict* dominance (IEDS), `(2, 2, 5)` still cannot eliminate `D`'s `(1, 1, 5)` because of the tie `5 = 5` in column `c`. Under *weak* dominance (IEWDS), that tie is allowed (`2 > 1`, `2 > 1`, and `5 >= 5`), knocking out Row `D`—which in turn lets Player 2 use $\frac{1}{2}a + \frac{1}{2}b$ to knock out Column `c`!
 
 ---
 
@@ -219,7 +220,7 @@ To test both elimination rules and find the Nash equilibria cleanly, I built **f
 
 #### C. Dynamic Elimination Loop (`run_elimination`)
 - **Catch #2 — Removing eliminated strategies immediately from the active lists:** In `run_elimination`, as soon as a row or column is dominated, it is removed from `active_rows` or `active_cols` and is no longer considered when evaluating the next player's actions.
-- That dynamic update is why Column $c$ gets eliminated in IEWDS: as long as Row $D$ was alive, Column $c$ was Player 2's best response to $D$ ($3 > 0$), so $c$ couldn't be touched. The moment Row $D$ is removed from `active_rows`, Player 2 only compares across $\{A, B\}$, where $\frac{1}{2}a + \frac{1}{2}b$ gives $(2, 2) > (1, 1)$ and eliminates $c$.
+- That dynamic update is why Column `c` gets eliminated in IEWDS: as long as Row `D` was alive, Column `c` was Player 2's best response to `D` (`3 > 0`), so `c` couldn't be touched. The moment Row `D` is removed from `active_rows`, Player 2 only compares across `{A, B}`, where $\frac{1}{2}a + \frac{1}{2}b$ gives `(2, 2) > (1, 1)` and eliminates `c`.
 
 #### D. Pure Nash Equilibria — "Same House" Mutual Best Responses (`find_pure_nash_equilibria`)
 - To find all Pure Nash Equilibria, we ask: if the other player locks in a specific row or column, what is my best conditional response?
@@ -231,88 +232,94 @@ To test both elimination rules and find the Nash equilibria cleanly, I built **f
 
 | Player 1 \ Player 2 | $a$ | $b$ | $c$ | $d$ |
 | :--- | :---: | :---: | :---: | :---: |
-| **$A$** | $(4, 4)$ | $(0, 0)$ | $(5, 1)$ | $(0, 0)$ |
-| **$B$** | $(0, 0)$ | $(4, 4)$ | $(5, 1)$ | $(0, 0)$ |
-| **$C$** | $(0, 0)$ | $(0, 0)$ | $(2, 1)$ | $(0, 0)$ |
-| **$D$** | $(1, 0)$ | $(1, 0)$ | $(5, 3)$ | $(0, 0)$ |
+| **$A$** | `(4, 4)` | `(0, 0)` | `(5, 1)` | `(0, 0)` |
+| **$B$** | `(0, 0)` | `(4, 4)` | `(5, 1)` | `(0, 0)` |
+| **$C$** | `(0, 0)` | `(0, 0)` | `(2, 1)` | `(0, 0)` |
+| **$D$** | `(1, 0)` | `(1, 0)` | `(5, 3)` | `(0, 0)` |
 
 ---
 
 #### Part (a): Iterated Elimination of Strictly Dominated Strategies (IEDS)
 
-1. **Step 1 — Eliminate Column $d$ (Player 2):**
-   - Initially, no row can be strictly dominated for Player 1 because every row ties at $u_1 = 0$ in column $d$.
-   - For Player 2, Column $d$ gives $(0, 0, 0, 0)$, which is **strictly dominated by pure strategy $c$** giving $(1, 1, 1, 3) > (0, 0, 0, 0)$. Remove $d$.
-2. **Step 2 — Eliminate Row $C$ (Player 1):**
-   - Across the remaining columns $\{a, b, c\}$, Row $C$ gives Player 1 $(0, 0, 2)$, which is **strictly dominated by pure strategy $D$** giving $(1, 1, 5) > (0, 0, 2)$ (as well as by $\frac{1}{2}A + \frac{1}{2}B$ giving $(2, 2, 5)$). Remove $C$.
-3. **Step 3 — Convergence Check on $\{A, B, D\} \times \{a, b, c\}$:**
-   - For Player 1, against column $c$, rows $A, B, D$ all tie at $u_1 = 5$, so no pure or mixed combination of $\{A, B, D\}$ can achieve a payoff strictly greater than $5$ against $c$. Thus $D$ cannot be strictly dominated.
-   - For Player 2, $a$ is the unique best response to $A$ ($4$), $b$ is the unique best response to $B$ ($4$), and $c$ is the unique best response to $D$ ($3$), so none of $\{a, b, c\}$ can be strictly dominated.
+1. **Step 1 — Eliminate Column `d` (Player 2):**
+   - Initially, no row can be strictly dominated for Player 1 because every row ties at `u1 = 0` in column `d`.
+   - For Player 2, Column `d` gives `(0, 0, 0, 0)`, which is **strictly dominated by pure strategy `c`** giving `(1, 1, 1, 3) > (0, 0, 0, 0)`. Remove `d`.
+2. **Step 2 — Eliminate Row `C` (Player 1):**
+   - Across the remaining columns `{a, b, c}`, Row `C` gives Player 1 `(0, 0, 2)`, which is **strictly dominated by pure strategy `D`** giving `(1, 1, 5) > (0, 0, 2)` (as well as by $\frac{1}{2}A + \frac{1}{2}B$ giving `(2, 2, 5)`). Remove `C`.
+3. **Step 3 — Convergence Check on `{A, B, D} x {a, b, c}`:**
+   - For Player 1, against column `c`, rows `A, B, D` all tie at `u1 = 5`, so no pure or mixed combination of `{A, B, D}` can achieve a payoff strictly greater than `5` against `c`. Thus `D` cannot be strictly dominated.
+   - For Player 2, `a` is the unique best response to `A` (`4`), `b` is the unique best response to `B` (`4`), and `c` is the unique best response to `D` (`3`), so none of `{a, b, c}` can be strictly dominated.
 
 **Surviving Strategies under IEDS:**
 
 $$
-S_1^{\text{IEDS}} = \{A, B, D\}, \quad S_2^{\text{IEDS}} = \{a, b, c\}
+S_1^{\text{IEDS}} = \lbrace A, B, D \rbrace, \quad S_2^{\text{IEDS}} = \lbrace a, b, c \rbrace
 $$
 
 ---
 
 #### Part (b): Iterated Elimination of Weakly Dominated Strategies (IEWDS)
 
-1. **Step 1 — Eliminate Row $C$ and Row $D$ (Player 1):**
-   - **Row $C$** $(0, 0, 2, 0)$ is weakly dominated by pure strategy $A$ $(4, 0, 5, 0)$ (or $B$ or $D$).
-   - **Row $D$** $(1, 1, 5, 0)$ is **weakly dominated by the mixed strategy $\sigma_1 = \frac{1}{2}A + \frac{1}{2}B$**, i.e., mixing probabilities $\sigma_1 = \left(\frac{1}{2}, \frac{1}{2}, 0, 0\right)$:
-     $$
-     u_1(\sigma_1, \cdot) = (2, 2, 5, 0) \quad \text{vs.} \quad u_1(D, \cdot) = (1, 1, 5, 0) \implies 2 > 1,\; 2 > 1,\; 5 \ge 5,\; 0 \ge 0
-     $$
-   - Remove $C$ and $D$, leaving Player 1 with $\{A, B\}$.
-2. **Step 2 — Eliminate Column $d$ and Column $c$ (Player 2):**
-   - Across the surviving rows $\{A, B\}$, **Column $d$** gives $(0, 0)$ and is weakly dominated by pure strategy $a$ $(4, 0)$ (or $b$, or $c$).
-   - Across the surviving rows $\{A, B\}$, **Column $c$** gives $(1, 1)$ and is **dominated by the mixed strategy $\sigma_2 = \frac{1}{2}a + \frac{1}{2}b$**, i.e., mixing probabilities $\sigma_2 = \left(\frac{1}{2}, \frac{1}{2}, 0, 0\right)$:
-     $$
-     u_2(\cdot, \sigma_2) = (2, 2) \quad \text{vs.} \quad u_2(\cdot, c) = (1, 1) \implies 2 > 1 \text{ against both } A \text{ and } B
-     $$
-   - Remove $c$ and $d$, leaving Player 2 with $\{a, b\}$.
-3. **Step 3 — Convergence Check on $\{A, B\} \times \{a, b\}$:**
-   - In the remaining $2 \times 2$ coordination game, $(A, a)$ and $(B, b)$ each give $(4, 4)$ while off-diagonal cells give $(0, 0)$, so no further weak eliminations exist.
+1. **Step 1 — Eliminate Row `C` and Row `D` (Player 1):**
+   - **Row `C`** `(0, 0, 2, 0)` is weakly dominated by pure strategy `A` `(4, 0, 5, 0)` (or `B` or `D`).
+   - **Row `D`** `(1, 1, 5, 0)` is **weakly dominated by the mixed strategy** $\sigma_1 = \frac{1}{2}A + \frac{1}{2}B$, with mixing probabilities $\sigma_1 = (1/2, 1/2, 0, 0)$:
+
+$$
+u_1(\sigma_1, \cdot) = (2, 2, 5, 0) \quad \text{vs.} \quad u_1(D, \cdot) = (1, 1, 5, 0) \implies 2 > 1, \quad 2 > 1, \quad 5 \ge 5, \quad 0 \ge 0
+$$
+
+   - Remove `C` and `D`, leaving Player 1 with `{A, B}`.
+
+2. **Step 2 — Eliminate Column `d` and Column `c` (Player 2):**
+   - Across the surviving rows `{A, B}`, **Column `d`** gives `(0, 0)` and is weakly dominated by pure strategy `a` `(4, 0)` (or `b`, or `c`).
+   - Across the surviving rows `{A, B}`, **Column `c`** gives `(1, 1)` and is **dominated by the mixed strategy** $\sigma_2 = \frac{1}{2}a + \frac{1}{2}b$, with mixing probabilities $\sigma_2 = (1/2, 1/2, 0, 0)$:
+
+$$
+u_2(\cdot, \sigma_2) = (2, 2) \quad \text{vs.} \quad u_2(\cdot, c) = (1, 1) \implies 2 > 1 \text{ against both } A \text{ and } B
+$$
+
+   - Remove `c` and `d`, leaving Player 2 with `{a, b}`.
+
+3. **Step 3 — Convergence Check on `{A, B} x {a, b}`:**
+   - In the remaining $2 \times 2$ coordination game, `(A, a)` and `(B, b)` each give `(4, 4)` while off-diagonal cells give `(0, 0)`, so no further weak eliminations exist.
 
 **Surviving Strategies under IEWDS:**
 
 $$
-S_1^{\text{IEWDS}} = \{A, B\}, \quad S_2^{\text{IEWDS}} = \{a, b\}
+S_1^{\text{IEWDS}} = \lbrace A, B \rbrace, \quad S_2^{\text{IEWDS}} = \lbrace a, b \rbrace
 $$
 
-*(Mixed strategies used: $\sigma_1 = \frac{1}{2}A + \frac{1}{2}B$ for Player 1, and $\sigma_2 = \frac{1}{2}a + \frac{1}{2}b$ for Player 2.)*
+> **Mixed strategies used:** $\sigma_1 = \frac{1}{2}A + \frac{1}{2}B$ for Player 1, and $\sigma_2 = \frac{1}{2}a + \frac{1}{2}b$ for Player 2.
 
 ---
 
 #### Part (c): Pure Nash Equilibria & Comparison with (a) and (b)
 
 Checking mutual best responses across all 16 cells of the $4 \times 4$ matrix yields **three Pure Nash Equilibria**:
-1. **$(A, a)$ with payoffs $(4, 4)$:** $u_1(A, a) = 4 = \max\{4, 0, 0, 1\}$ and $u_2(A, a) = 4 = \max\{4, 0, 1, 0\}$.
-2. **$(B, b)$ with payoffs $(4, 4)$:** $u_1(B, b) = 4 = \max\{0, 4, 0, 1\}$ and $u_2(B, b) = 4 = \max\{0, 4, 1, 0\}$.
-3. **$(D, c)$ with payoffs $(5, 3)$:** $u_1(D, c) = 5 = \max\{5, 5, 2, 5\}$ (tied best response with $A$ and $B$) and $u_2(D, c) = 3 = \max\{0, 0, 3, 0\}$.
+1. **`(A, a)` with payoffs `(4, 4)`:** $u_1(A, a) = 4 = \max\lbrace 4, 0, 0, 1 \rbrace$ and $u_2(A, a) = 4 = \max\lbrace 4, 0, 1, 0 \rbrace$.
+2. **`(B, b)` with payoffs `(4, 4)`:** $u_1(B, b) = 4 = \max\lbrace 0, 4, 0, 1 \rbrace$ and $u_2(B, b) = 4 = \max\lbrace 0, 4, 1, 0 \rbrace$.
+3. **`(D, c)` with payoffs `(5, 3)`:** $u_1(D, c) = 5 = \max\lbrace 5, 5, 2, 5 \rbrace$ (tied best response with `A` and `B`) and $u_2(D, c) = 3 = \max\lbrace 0, 0, 3, 0 \rbrace$.
 
 **Comparison with IEDS and IEWDS:**
-- **IEDS vs. Nash Equilibria:** All three Pure Nash Equilibria—$(A, a)$, $(B, b)$, and $(D, c)$—**survive IEDS** ($\{A, B, D\} \times \{a, b, c\}$). This matches the general rule that a Nash Equilibrium can *never* use a strictly dominated strategy, so IEDS is guaranteed to preserve every Nash Equilibrium.
-- **IEWDS vs. Nash Equilibria:** Only $(A, a)$ and $(B, b)$ survive IEWDS; **the Nash Equilibrium $(D, c)$ gets eliminated**! Because $D$ ties with $A$ and $B$ against column $c$ ($u_1 = 5$), $(D, c)$ is still a valid mutual best response even though $D$ is weakly dominated by $\frac{1}{2}A + \frac{1}{2}B$. Unlike IEDS, **IEWDS can eliminate valid Nash Equilibria**.
+- **IEDS vs. Nash Equilibria:** All three Pure Nash Equilibria—`(A, a)`, `(B, b)`, and `(D, c)`—**survive IEDS** (`{A, B, D} x {a, b, c}`). This matches the general rule that a Nash Equilibrium can *never* use a strictly dominated strategy, so IEDS is guaranteed to preserve every Nash Equilibrium.
+- **IEWDS vs. Nash Equilibria:** Only `(A, a)` and `(B, b)` survive IEWDS; **the Nash Equilibrium `(D, c)` gets eliminated**! Because `D` ties with `A` and `B` against column `c` (`u1 = 5`), `(D, c)` is still a valid mutual best response even though `D` is weakly dominated by $\frac{1}{2}A + \frac{1}{2}B$. Unlike IEDS, **IEWDS can eliminate valid Nash Equilibria**.
 
 ---
 
 ## Problem 4: Joining a Student Initiative
 
 ### 1. Initial Intuition & Moving from 2 Players to a 3-Player Game
-In Problem 4, we move from 2-player matrices to a **3-player simultaneous game** where three students ($i \in \{1, 2, 3\}$) decide at the same time whether to **Join (`J`)** a student initiative or **Stay Home (`H`)**:
+In Problem 4, we move from 2-player matrices to a **3-player simultaneous game** where three students ($i \in \lbrace 1, 2, 3 \rbrace$) decide at the same time whether to **Join (`J`)** a student initiative or **Stay Home (`H`)**:
 - Staying home always gives a safe payoff of $u_i(H, s_{-i}) = 0$.
-- Joining depends on the student's personal baseline motivation $b_i$ and on how many of the **other two students** join ($k_i \in \{0, 1, 2\}$):
+- Joining depends on the student's personal baseline motivation $b_i$ and on how many of the **other two students** join ($k_i \in \lbrace 0, 1, 2 \rbrace$):
 
 $$
 u_i(J, s_{-i}) = b_i + 2k_i - 4
 $$
 
 What made this problem really interesting to work through was seeing how a tiny change in Student 1's motivation ($b_1 = 5$ in Part a vs. $b_1 = 3$ in Part b) completely changes the strategic dynamic:
-- **Part (a) — The "Staircase" (Domino) Effect with $b = (5, 3, 1)$:** Student 1 is motivated enough ($b_1 = 5$) to join even alone ($k_1 = 0 \implies 5 - 4 = 1 > 0$). Once `H` is eliminated for Student 1, Student 2 ($b_2 = 3$) is guaranteed at least one partner ($k_2 \ge 1 \implies 3 + 2 - 4 = 1 > 0$), which eliminates `H` for Student 2—and that in turn guarantees two partners for Student 3 ($b_3 = 1$, $k_3 = 2 \implies 1 + 4 - 4 = 1 > 0$), creating a 3-round staircase where everyone joins!
-- **Part (b) — When the Staircase Breaks with $b = (3, 3, 1)$:** When $b_1$ drops from $5$ to $3$, nobody wants to join alone anymore ($k_i = 0$ gives $-1$ or $-3 < 0$). IEDS cannot eliminate anything, and the game turns into a 3-player coordination problem with **two Pure Nash Equilibria**: everyone joining `(J, J, J)` or everyone staying home `(H, H, H)`.
+- **Part (a) — The "Staircase" (Domino) Effect with `b = (5, 3, 1)`:** Student 1 is motivated enough ($b_1 = 5$) to join even alone ($k_1 = 0 \implies 5 - 4 = 1 > 0$). Once `H` is eliminated for Student 1, Student 2 ($b_2 = 3$) is guaranteed at least one partner ($k_2 \ge 1 \implies 3 + 2 - 4 = 1 > 0$), which eliminates `H` for Student 2—and that in turn guarantees two partners for Student 3 ($b_3 = 1$, $k_3 = 2 \implies 1 + 4 - 4 = 1 > 0$), creating a 3-round staircase where everyone joins!
+- **Part (b) — When the Staircase Breaks with `b = (3, 3, 1)`:** When $b_1$ drops from `5` to `3`, nobody wants to join alone anymore ($k_i = 0$ gives `-1` or `-3 < 0`). IEDS cannot eliminate anything, and the game turns into a 3-player coordination problem with **two Pure Nash Equilibria**: everyone joining `(J, J, J)` or everyone staying home `(H, H, H)`.
 
 ---
 
@@ -335,60 +342,60 @@ To represent a 3-player game without a 3D visual table, I used 3-tuples `(s1, s2
 
 ### 3. Payoff Table & Step-by-Step Solutions
 
-| Profile $(s_1, s_2, s_3)$ | Other Joiners $(k_1, k_2, k_3)$ | Payoffs for $b = (5, 3, 1)$ | Payoffs for $b = (3, 3, 1)$ |
+| Profile `(s1, s2, s3)` | Other Joiners `(k1, k2, k3)` | Payoffs for `b = (5, 3, 1)` | Payoffs for `b = (3, 3, 1)` |
 | :---: | :---: | :---: | :---: |
-| **$(J, J, J)$** | $(2, 2, 2)$ | $(5, 3, 1)$ | **$(3, 3, 1)$** *(PNE)* |
-| **$(J, J, H)$** | $(1, 1, 2)$ | $(3, 1, 0)$ | $(1, 1, 0)$ |
-| **$(J, H, J)$** | $(1, 2, 1)$ | $(3, 0, -1)$ | $(1, 0, -1)$ |
-| **$(J, H, H)$** | $(0, 1, 1)$ | $(1, 0, 0)$ | $(-1, 0, 0)$ |
-| **$(H, J, J)$** | $(2, 1, 1)$ | $(0, 1, -1)$ | $(0, 1, -1)$ |
-| **$(H, J, H)$** | $(1, 0, 1)$ | $(0, -1, 0)$ | $(0, -1, 0)$ |
-| **$(H, H, J)$** | $(1, 1, 0)$ | $(0, 0, -3)$ | $(0, 0, -3)$ |
-| **$(H, H, H)$** | $(0, 0, 0)$ | $(0, 0, 0)$ | **$(0, 0, 0)$** *(PNE)* |
+| **`(J, J, J)`** | `(2, 2, 2)` | `(5, 3, 1)` | **`(3, 3, 1)`** *(PNE)* |
+| **`(J, J, H)`** | `(1, 1, 2)` | `(3, 1, 0)` | `(1, 1, 0)` |
+| **`(J, H, J)`** | `(1, 2, 1)` | `(3, 0, -1)` | `(1, 0, -1)` |
+| **`(J, H, H)`** | `(0, 1, 1)` | `(1, 0, 0)` | `(-1, 0, 0)` |
+| **`(H, J, J)`** | `(2, 1, 1)` | `(0, 1, -1)` | `(0, 1, -1)` |
+| **`(H, J, H)`** | `(1, 0, 1)` | `(0, -1, 0)` | `(0, -1, 0)` |
+| **`(H, H, J)`** | `(1, 1, 0)` | `(0, 0, -3)` | `(0, 0, -3)` |
+| **`(H, H, H)`** | `(0, 0, 0)` | `(0, 0, 0)` | **`(0, 0, 0)`** *(PNE)* |
 
 ---
 
-#### Part (a): IEDS with $(b_1, b_2, b_3) = (5, 3, 1)$
+#### Part (a): IEDS with `(b1, b2, b3) = (5, 3, 1)`
 
-1. **Round 1 — Eliminate $H$ for Student 1:**
+1. **Round 1 — Eliminate `H` for Student 1:**
    - With $b_1 = 5$, Student 1's payoff from joining is $u_1(J, s_{-1}) = 5 + 2k_1 - 4 = 1 + 2k_1$.
-   - Even in the worst case where neither Student 2 nor Student 3 joins ($k_1 = 0$), $u_1(J) = 1 > 0 = u_1(H)$ (specifically, $u_1(J) \in \{1, 3, 5\} > 0$).
-   - Thus **$H$ is strictly dominated by $J$ for Student 1**, reducing $S_1^1 = \{J\}$.
-2. **Round 2 — Eliminate $H$ for Student 2:**
-   - Knowing Student 1 always plays $J$, the number of other participants for Student 2 is at least $k_2 \ge 1$ ($k_2 \in \{1, 2\}$).
-   - With $b_2 = 3$, Student 2's payoff from joining is $u_2(J, s_{-2}) = 3 + 2k_2 - 4 = 2k_2 - 1 \ge 1 > 0 = u_2(H)$ (specifically, $u_2(J) \in \{1, 3\} > 0$).
-   - Thus **$H$ is strictly dominated by $J$ for Student 2**, reducing $S_2^2 = \{J\}$.
-3. **Round 3 — Eliminate $H$ for Student 3:**
-   - Knowing both Student 1 and Student 2 play $J$, Student 3 faces $k_3 = 2$ with certainty.
+   - Even in the worst case where neither Student 2 nor Student 3 joins ($k_1 = 0$), $u_1(J) = 1 > 0 = u_1(H)$ (specifically, $u_1(J) \in \lbrace 1, 3, 5 \rbrace > 0$).
+   - Thus **`H` is strictly dominated by `J` for Student 1**, reducing $S_1^1 = \lbrace J \rbrace$.
+2. **Round 2 — Eliminate `H` for Student 2:**
+   - Knowing Student 1 always plays `J`, the number of other participants for Student 2 is at least $k_2 \ge 1$ ($k_2 \in \lbrace 1, 2 \rbrace$).
+   - With $b_2 = 3$, Student 2's payoff from joining is $u_2(J, s_{-2}) = 3 + 2k_2 - 4 = 2k_2 - 1 \ge 1 > 0 = u_2(H)$ (specifically, $u_2(J) \in \lbrace 1, 3 \rbrace > 0$).
+   - Thus **`H` is strictly dominated by `J` for Student 2**, reducing $S_2^2 = \lbrace J \rbrace$.
+3. **Round 3 — Eliminate `H` for Student 3:**
+   - Knowing both Student 1 and Student 2 play `J`, Student 3 faces $k_3 = 2$ with certainty.
    - With $b_3 = 1$, Student 3's payoff from joining is $u_3(J, J, J) = 1 + 2(2) - 4 = 1 > 0 = u_3(H, J, J)$.
-   - Thus **$H$ is strictly dominated by $J$ for Student 3**, reducing $S_3^3 = \{J\}$.
+   - Thus **`H` is strictly dominated by `J` for Student 3**, reducing $S_3^3 = \lbrace J \rbrace$.
 
 **Surviving Strategy Profile under IEDS:**
 
 $$
-S_1^\infty = \{J\}, \quad S_2^\infty = \{J\}, \quad S_3^\infty = \{J\} \implies \text{Unique survivor: } (J, J, J)
+S_1^\infty = \lbrace J \rbrace, \quad S_2^\infty = \lbrace J \rbrace, \quad S_3^\infty = \lbrace J \rbrace \implies \text{Unique survivor: } (J, J, J)
 $$
 
 ---
 
-#### Part (b): Pure Nash Equilibria with $(b_1, b_2, b_3) = (3, 3, 1)$
+#### Part (b): Pure Nash Equilibria with `(b1, b2, b3) = (3, 3, 1)`
 
-Checking unilateral deviations across all 8 profiles for $b = (3, 3, 1)$:
-1. **$(J, J, J)$ with payoffs $(3, 3, 1)$ is a Pure Nash Equilibrium:**
-   - Here $k_1 = k_2 = k_3 = 2$. Every student receives a strictly positive payoff ($u_1 = 3 > 0$, $u_2 = 3 > 0$, $u_3 = 1 > 0$), so no student wants to switch unilaterally to $H$ (which would give $0$).
-2. **$(H, H, H)$ with payoffs $(0, 0, 0)$ is a Pure Nash Equilibrium:**
-   - Here $k_1 = k_2 = k_3 = 0$. If any single student switches alone to $J$ (with $k_i = 0$):
+Checking unilateral deviations across all 8 profiles for `b = (3, 3, 1)`:
+1. **`(J, J, J)` with payoffs `(3, 3, 1)` is a Pure Nash Equilibrium:**
+   - Here $k_1 = k_2 = k_3 = 2$. Every student receives a strictly positive payoff ($u_1 = 3 > 0$, $u_2 = 3 > 0$, $u_3 = 1 > 0$), so no student wants to switch unilaterally to `H` (which would give `0`).
+2. **`(H, H, H)` with payoffs `(0, 0, 0)` is a Pure Nash Equilibrium:**
+   - Here $k_1 = k_2 = k_3 = 0$. If any single student switches alone to `J` (with $k_i = 0$):
      - Student 1 would get $3 + 0 - 4 = -1 < 0$.
      - Student 2 would get $3 + 0 - 4 = -1 < 0$.
      - Student 3 would get $1 + 0 - 4 = -3 < 0$.
-   - Since nobody wants to join alone, $(H, H, H)$ is also a Pure Nash Equilibrium.
+   - Since nobody wants to join alone, `(H, H, H)` is also a Pure Nash Equilibrium.
 3. **Why none of the other 6 profiles are Nash Equilibria:**
-   - In $(J, J, H) \to (1, 1, 0)$, Student 3 faces $k_3 = 2$ and can switch from $H$ ($0$) to $J$ ($1 + 4 - 4 = 1 > 0$).
-   - In $(J, H, J) \to (1, 0, -1)$ and $(H, J, J) \to (0, 1, -1)$, Student 3 gets $-1 < 0$ and wants to switch from $J$ to $H$ ($0$).
-   - In $(J, H, H)$, $(H, J, H)$, and $(H, H, J)$, the lone joiner has $k_i = 0$ and gets a negative payoff ($-1$ or $-3 < 0$), so they want to switch to $H$.
+   - In `(J, J, H) -> (1, 1, 0)`, Student 3 faces $k_3 = 2$ and can switch from `H` (`0`) to `J` ($1 + 4 - 4 = 1 > 0$).
+   - In `(J, H, J) -> (1, 0, -1)` and `(H, J, J) -> (0, 1, -1)`, Student 3 gets `-1 < 0` and wants to switch from `J` to `H` (`0`).
+   - In `(J, H, H)`, `(H, J, H)`, and `(H, H, J)`, the lone joiner has $k_i = 0$ and gets a negative payoff (`-1` or `-3 < 0`), so they want to switch to `H`.
 
-**All Pure Nash Equilibria for $b = (3, 3, 1)$:**
+**All Pure Nash Equilibria for `b = (3, 3, 1)`:**
 
 $$
-\text{PNE} = \bigl\{\, (J, J, J),\, (H, H, H) \,\bigr\}
+\text{PNE} = \lbrace (J, J, J), (H, H, H) \rbrace
 $$

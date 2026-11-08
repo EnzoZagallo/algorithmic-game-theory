@@ -76,7 +76,10 @@ Before running [`chomp_solver.py`](chomp_solver.py), I sketched smaller 2-row ch
 - On `2x1`, eating the top piece `(0, 0)` immediately leaves just the poison `X` at `(1, 0)`.
 - On `2x2`, eating `(0, 0)` leaves **1 piece in the top row** and **2 pieces in the bottom row**. Whichever safe piece Player 2 eats next, I can eat the other safe piece and leave only `X`.
 - Testing `2x3` and `2x4` showed the exact same pairing rule! Every losing trap ($\mathcal{P}$-position) on a $2 \times n$ board has **1 fewer piece in the top (safe) row than in the bottom (poisoned) row**:
-  $$(a, b) \in \{(3, 4),\, (2, 3),\, (1, 2),\, (0, 1)\}$$
+
+$$
+(a, b) \in \lbrace (3, 4), (2, 3), (1, 2), (0, 1) \rbrace
+$$
 
 So on the **$2 \times 4$ grid**, **Player 1 has a winning strategy**:
 - **Opening Move:** Eat the single top-left piece `(0, 0)`, leaving `(3, 4)`:
@@ -104,5 +107,5 @@ Trying to find a neat formula like `(k - 1, k)` for general $m \times n$ boards 
 2. **Assume Player 2 has a winning strategy:** Suppose $G_0$ is a $\mathcal{P}$-position for some $(m, n) \neq (1, 1)$. That means *every* opening move by Player 1 has a winning counter-move for Player 2.
 3. **Test the tiny corner bite `(0, 0)`:** Since the bar has more than 1 piece, Player 1 can nibble just the top-left corner piece $(0, 0)$, which removes **only that single square**, leaving board $G_1$.
 4. **Look at Player 2's winning reply:** By our assumption, Player 2 has a winning response on $G_1$—say, biting some piece $p = (r, c)$—which leaves a losing trap board $G_2 \in \mathcal{P}$.
-5. **The contradiction (Strategy Stealing):** Biting $(r, c)$ clears the entire upper-left rectangle $0 \le i \le r,\, 0 \le j \le c$, which **already includes `(0, 0)` anyway**! That means biting `(0, 0)` and then biting $(r, c)$ produces the **exact same board $G_2$** as just biting $(r, c)$ on Move 1.
+5. **The contradiction (Strategy Stealing):** Biting $(r, c)$ clears the entire upper-left rectangle $0 \le i \le r$ and $0 \le j \le c$, which **already includes `(0, 0)` anyway**! That means biting `(0, 0)` and then biting $(r, c)$ produces the **exact same board $G_2$** as just biting $(r, c)$ on Move 1.
 6. So Player 1 could have simply eaten $(r, c)$ on the very first turn, handing $G_2 \in \mathcal{P}$ straight to Player 2! That contradicts $G_0$ being a winning game for Player 2. Therefore, Player 1 always has a winning strategy whenever $(m, n) \neq (1, 1)$. $\blacksquare$
